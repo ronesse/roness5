@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kamper og aktiviteter</title>
+<style>
+:root{
+  --bg:#f4f6f8; --card:#fff; --text:#1f2937; --muted:#64748b; --line:#e5e7eb;
+  --accent:#1637d6;
+  --ingrid:#7c3aed; --mads:#059669; --thomas:#e11d48; --eirik:#d97706;
+  --u20:#2563eb; --gry:#0891b2;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding-bottom:92px}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#122a9c,#2647ee);color:white;padding:18px 16px 14px;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+header h1{margin:0;font-size:24px}
+header .sub{margin-top:4px;color:#dbeafe;font-size:13px}
+main{max-width:980px;margin:auto;padding:14px}
+.page{display:none}.page.active{display:block}
+.page-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-end;margin:3px 0 10px}
+.page-head h2{margin:0;font-size:23px}
+.page-head .meta{font-size:13px;color:var(--muted)}
+.person-stripe{padding-left:10px;border-left:6px solid var(--accent)}
+.person-stripe.ingrid{border-color:var(--ingrid)}
+.person-stripe.mads{border-color:var(--mads)}
+.person-stripe.thomas{border-color:var(--thomas)}
+.person-stripe.eirik{border-color:var(--eirik)}
+
+.view-toggle{display:inline-flex;gap:4px;background:#e5e7eb;padding:4px;border-radius:11px;margin:6px 0 14px}
+.view-btn{border:0;background:transparent;color:#475569;padding:8px 13px;border-radius:8px;font-weight:850;cursor:pointer}
+.view-btn.active{background:white;color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.view-pane{display:none}.view-pane.active{display:block}
+
+/* Legend */
+.legend{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 12px}
+.legend-item{display:flex;align-items:center;gap:6px;background:white;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;font-weight:850}
+.dot{width:10px;height:10px;border-radius:50%}
+.dot.ingrid{background:var(--ingrid)} .dot.mads{background:var(--mads)}
+.dot.thomas{background:var(--thomas)} .dot.eirik{background:var(--eirik)}
+.dot.u20{background:var(--u20)}
+
+/* List */
+.month-list{margin-bottom:18px}
+.month-list-title{font-size:18px;font-weight:950;margin:10px 0 8px}
+.list-item{display:grid;grid-template-columns:72px 1fr;gap:10px;background:white;border:1px solid var(--line);border-left:6px solid #94a3b8;border-radius:12px;padding:10px 11px;margin-bottom:7px}
+.list-item.ingrid{border-left-color:var(--ingrid)}
+.list-item.mads{border-left-color:var(--mads)}
+.list-item.thomas{border-left-color:var(--thomas)}
+.list-item.eirik{border-left-color:var(--eirik)}
+.list-item.u20{border-left-color:var(--u20);background:#eff6ff}
+.list-date{font-weight:900;font-size:13px}
+.list-time{font-weight:950;font-size:17px;color:var(--accent);margin-top:2px}
+.week-no{font-size:10px;font-weight:950;color:var(--muted);margin-top:3px}
+.person-badge{display:inline-block;color:white;font-size:11px;font-weight:950;border-radius:999px;padding:4px 8px;margin-bottom:4px}
+.person-badge.ingrid{background:var(--ingrid)} .person-badge.mads{background:var(--mads)}
+.person-badge.thomas{background:var(--thomas)} .person-badge.eirik{background:var(--eirik)}
+.person-badge.u20{background:var(--u20)}
+.item-title{font-size:15px;font-weight:850}
+.item-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.free-weekend{border:2px solid #dc2626;background:#fff7f7;border-radius:12px;padding:10px 12px;margin:9px 0 12px;color:#991b1b}
+.free-weekend strong{font-size:13px}
+.free-weekend .dates{font-size:12px;margin-top:2px}
+.free-weekend .week-no{color:#991b1b}
+
+/* Calendar */
+.month-card{background:white;border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.month-title{padding:11px 13px;font-weight:950;font-size:18px;background:#f8fafc;border-bottom:1px solid var(--line)}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.dow{padding:7px 2px;text-align:center;font-size:11px;font-weight:900;color:var(--muted);border-bottom:1px solid var(--line)}
+.day{min-height:104px;padding:5px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;background:#fff}
+.day:nth-child(7n){border-right:0}.day.empty{background:#f8fafc}
+.daynum{font-size:11px;font-weight:900;color:#475569}
+.calendar-week{display:inline-block;font-size:8px;font-weight:950;color:#475569;background:#e2e8f0;border-radius:999px;padding:1px 4px;margin-top:2px}
+.cal-event{border:1px solid;border-radius:6px;padding:3px 4px;font-size:9px;line-height:1.18;margin-top:3px;font-weight:850;overflow-wrap:anywhere}
+.cal-event.ingrid{background:#ede9fe;color:#5b21b6;border-color:#c4b5fd}
+.cal-event.mads{background:#d1fae5;color:#065f46;border-color:#6ee7b7}
+.cal-event.thomas{background:#ffe4e6;color:#9f1239;border-color:#fda4af}
+.cal-event.eirik{background:#fef3c7;color:#92400e;border-color:#fcd34d}
+.cal-event.u20{background:#dbeafe;color:#1e3a8a;border-color:#60a5fa}
+
+/* Frihelg: dynamic markers */
+.free-cell{background:#fff7f7!important}
+.free-fri{border-left:3px solid #dc2626!important;border-top:3px solid #dc2626!important;border-bottom:3px solid #dc2626!important}
+.free-sat{border-top:3px solid #dc2626!important;border-bottom:3px solid #dc2626!important}
+.free-sun{border-right:3px solid #dc2626!important;border-top:3px solid #dc2626!important;border-bottom:3px solid #dc2626!important}
+.free-label{position:absolute;left:50%;top:3px;transform:translateX(-50%);z-index:5;font-size:8px;font-weight:950;color:#991b1b;background:#fee2e2;border:1px solid #fecaca;border-radius:999px;padding:1px 4px;white-space:nowrap}
+
+/* Bottom buttons */
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:1000;display:grid;grid-template-columns:repeat(6,1fr);background:#fff;border-top:1px solid #d1d5db;box-shadow:0 -4px 18px rgba(0,0,0,.10);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+.bottom-btn{border:0;background:transparent;min-width:0;padding:7px 2px 6px;border-radius:10px;color:#475569;cursor:pointer}
+.bottom-btn .team{display:block;font-size:9px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bottom-btn .name{display:block;font-size:12px;font-weight:950;margin-top:2px}
+.bottom-btn.active[data-page="all"]{background:#111827;color:white}
+.bottom-btn.active[data-page="ingrid"]{background:#ede9fe;color:#5b21b6}
+.bottom-btn.active[data-page="mads"]{background:#d1fae5;color:#065f46}
+.bottom-btn.active[data-page="thomas"]{background:#ffe4e6;color:#9f1239}
+.bottom-btn.active[data-page="eirik"]{background:#fef3c7;color:#92400e}
+
+@media(max-width:560px){
+  main{padding:10px}
+  .day{min-height:83px;padding:3px}
+  .dow{font-size:9px;padding:5px 1px}
+  .daynum{font-size:9px}
+  .cal-event{font-size:7.5px;padding:2px 3px}
+  .calendar-week{font-size:7px}
+  .free-label{font-size:7px}
+  .list-item{grid-template-columns:62px 1fr;padding:9px 8px}
+  .list-time{font-size:15px}
+  .item-title{font-size:13px}
+}
+
+/* Filters on "Alle" */
+.all-filters{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:0 0 12px;
+}
+.filter-chip{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:8px 11px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  user-select:none;
+}
+.filter-chip input{
+  width:17px;
+  height:17px;
+  margin:0;
+  cursor:pointer;
+}
+.filter-chip.ingrid input{accent-color:var(--ingrid)}
+.filter-chip.mads input{accent-color:var(--mads)}
+.filter-chip.thomas input{accent-color:var(--thomas)}
+.filter-chip.eirik input{accent-color:var(--eirik)}
+.filter-chip:has(input:not(:checked)){opacity:.48}
+.filter-summary{
+  font-size:12px;
+  color:var(--muted);
+  margin:-4px 0 12px;
+}
+.empty-selection{
+  background:#fff;
+  border:1px dashed #cbd5e1;
+  border-radius:14px;
+  padding:24px 16px;
+  color:var(--muted);
+  text-align:center;
+  font-weight:750;
+}
+
+
+/* Hjemme/borte-indikator i kalender */
+.ha-badge{display:inline-block;min-width:14px;text-align:center;margin-right:3px;padding:1px 3px;border-radius:4px;font-size:7px;line-height:1.2;font-weight:950;vertical-align:1px}
+.ha-home{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.ha-away{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+@media(max-width:560px){.ha-badge{font-size:6.5px;padding:1px 2px;margin-right:2px}}
+
+
+.person-stripe.gry{border-color:var(--gry)}
+.dot.gry{background:var(--gry)}
+.list-item.gry{border-left-color:var(--gry)}
+.person-badge.gry{background:var(--gry)}
+.cal-event.gry{background:#cffafe;color:#155e75;border-color:#67e8f9}
+.filter-chip.gry input{accent-color:var(--gry)}
+.bottom-btn.active[data-page="gry"]{background:#cffafe;color:#155e75}
+
+
+/* Felles aktiviteter i Alle-visning */
+.shared-badges{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-bottom:5px;
+}
+.shared-badge{
+  display:inline-block;
+  color:#fff;
+  font-size:11px;
+  font-weight:950;
+  line-height:1;
+  border-radius:999px;
+  padding:5px 8px;
+}
+.shared-badge.ingrid{background:var(--ingrid)}
+.shared-badge.mads{background:var(--mads)}
+.shared-badge.thomas{background:var(--thomas)}
+.shared-badge.eirik{background:var(--eirik)}
+.shared-badge.gry{background:var(--gry)}
+
+.list-item.shared-activity{
+  border-left-width:8px;
+}
+.cal-event.shared-activity{
+  background:#fff;
+  color:#1f2937;
+  border-color:#cbd5e1;
+  font-weight:850;
+}
+.cal-shared-badges{
+  display:flex;
+  flex-wrap:wrap;
+  gap:2px;
+  margin-bottom:2px;
+}
+.cal-shared-badge{
+  color:#fff;
+  font-size:7px;
+  line-height:1;
+  font-weight:950;
+  border-radius:999px;
+  padding:2px 4px;
+  white-space:nowrap;
+}
+.cal-shared-badge.ingrid{background:var(--ingrid)}
+.cal-shared-badge.mads{background:var(--mads)}
+.cal-shared-badge.thomas{background:var(--thomas)}
+.cal-shared-badge.eirik{background:var(--eirik)}
+.cal-shared-badge.gry{background:var(--gry)}
+@media(max-width:560px){
+  .shared-badge{font-size:10px;padding:4px 7px}
+  .cal-shared-badge{font-size:6.5px;padding:2px 3px}
+}
+
+
+/* Kompakt dobbeltkamp */
+.double-match{display:grid;grid-template-columns:72px 18px 1fr;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 10px;margin-bottom:7px}.double-match.ingrid{border-left:6px solid var(--ingrid)}.double-match.eirik{border-left:6px solid var(--eirik)}.double-brace{display:flex;align-items:center;justify-content:center;font:58px/.8 Georgia,serif;transform:scaleX(.72)}.double-match.ingrid .double-brace{color:var(--ingrid)}.double-match.eirik .double-brace{color:var(--eirik)}.double-games{display:flex;flex-direction:column;gap:5px}.double-game-row{display:grid;grid-template-columns:48px 1fr;gap:7px}.double-game-row+.double-game-row{border-top:1px solid #e5e7eb;padding-top:5px}.double-time{font-size:14px;font-weight:950;color:var(--accent)}.double-title{font-size:13px;font-weight:850}.double-hall{font-size:10px;color:var(--muted)}.cal-double{position:relative;padding-left:10px!important}.cal-double:before{content:"}";position:absolute;left:0;top:50%;transform:translateY(-50%) scaleX(.62);font:38px/1 Georgia,serif}.cal-double.ingrid:before{color:var(--ingrid)}.cal-double.eirik:before{color:var(--eirik)}.cal-double-row+.cal-double-row{border-top:1px solid rgba(100,116,139,.28);margin-top:2px;padding-top:2px}@media(max-width:560px){.double-match{grid-template-columns:62px 15px 1fr;padding:8px 7px;gap:5px}.double-brace{font-size:50px}.double-game-row{grid-template-columns:40px 1fr;gap:4px}.double-time{font-size:12px}.double-title{font-size:11px}.double-hall{font-size:9px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Kamper og aktiviteter</h1>
+  <div class="sub">Sesongen 2026–2027</div>
+</header>
+
+<main id="app"></main>
+
+<nav class="bottom-nav">
+  <button class="bottom-btn active" data-page="all"><span class="team">Alle</span><span class="name">Kamper</span></button>
+  <button class="bottom-btn" data-page="ingrid"><span class="team">Koll 2</span><span class="name">Ingrid</span></button>
+  <button class="bottom-btn" data-page="mads"><span class="team">TIF Viking</span><span class="name">Mads</span></button>
+  <button class="bottom-btn" data-page="thomas"><span class="team">Jardar</span><span class="name">Thomas</span></button>
+  <button class="bottom-btn" data-page="eirik"><span class="team">Vikersund</span><span class="name">Eirik</span></button>
+  <button class="bottom-btn" data-page="gry"><span class="team">Aktiviteter</span><span class="name">Gry</span></button>
+</nav>
+
+<script>
+const DATA = {
+  ingrid:{
+    name:"Ingrid", team:"Koll 2", subtitle:"Koll 2 · Øst 2. divisjon kvinner", cls:"ingrid",
+    games:[
+      ["2026-10-10","10:00","Koll 2 – Oslo Volley 2","Nydalen idrettshall A"],
+      ["2026-10-10","14:00","Bislett Volley – Koll 2","Nydalen idrettshall A"],
+      ["2026-10-31","10:00","Koll 2 – Ivrig IL","Domus Athletica A"],
+      ["2026-10-31","14:00","OSI 3 – Koll 2","Domus Athletica A"],
+      ["2026-11-21","12:00","SSK Skjetten – Koll 2","Stovnerhallen A"],
+      ["2026-11-21","14:00","Koll 2 – Stovner SK","Stovnerhallen A"],
+      ["2026-12-13","13:00","Kolbotn IL – Koll 2","Stovnerhallen A"],
+      ["2026-12-13","15:00","Koll 2 – Oldenborg Idrettsselskap","Stovnerhallen A"],
+      ["2027-01-10","11:00","Koll 2 – OSI 3","Nydalen idrettshall A"],
+      ["2027-01-10","13:00","Oslo Volley 2 – Koll 2","Nydalen idrettshall A"],
+      ["2027-02-14","13:00","Ivrig IL – Koll 2","Kringsjåhallen B"],
+      ["2027-02-14","15:00","Koll 2 – Bislett Volley","Kringsjåhallen B"],
+      ["2027-03-06","10:00","Stovner SK – Koll 2","Skjettenhallen A"],
+      ["2027-03-06","14:00","Koll 2 – SSK Skjetten","Skjettenhallen A"],
+      ["2027-04-03","10:00","Koll 2 – Kolbotn IL","Voksenhallen B"],
+      ["2027-04-03","14:00","Oldenborg Idrettsselskap – Koll 2","Voksenhallen B"]
+    ], activities:[]
+  },
+  mads:{
+    name:"Mads", team:"TIF Viking", subtitle:"TIF Viking · Mizunoligaen menn", cls:"mads",
+    games:[
+      ["2026-10-03","15:30","BSI – TIF Viking","Stemmemyren idrettshall"],
+      ["2026-10-10","13:00","Koll – TIF Viking","Kringsjåhallen"],
+      ["2026-10-11","13:00","Oslo Volley – TIF Viking","Nydalen idrettshall"],
+      ["2026-10-18","13:30","TIF Viking – Førde VBK","Åsane Arena"],
+      ["2026-11-07","17:00","BK Tromsø – TIF Viking","Tromsøhallen B"],
+      ["2026-11-22","16:00","TIF Viking – BSI","Åsane Arena"],
+      ["2026-12-05","16:30","Randaberg IL – TIF Viking","Randaberghallen"],
+      ["2026-12-06","16:00","ToppVolley Norge – TIF Viking","Suldalshallen"],
+      ["2026-12-12","16:00","Førde VBK – TIF Viking","Øyrane Arena"],
+      ["2027-01-09","15:00","TIF Viking – NTNUI","Åsane Arena"],
+      ["2027-01-23","15:30","TIF Viking – Koll","Åsane Arena"],
+      ["2027-02-13","15:30","TIF Viking – Randaberg IL","Åsane Arena"],
+      ["2027-02-28","15:30","NTNUI – TIF Viking","Dragvollhallen A"],
+      ["2027-03-07","16:00","TIF Viking – Oslo Volley","Åsane Arena"],
+      ["2027-04-03","13:00","TIF Viking – BK Tromsø","Åsane Arena"]
+    ], activities:[]
+  },
+  thomas:{
+    name:"Thomas", team:"IL Jardar", subtitle:"IL Jardar · 1. divisjon menn", cls:"thomas",
+    games:[
+      ["2026-09-27","14:00","IL Jardar – Førde VBK 2","Combihallen"],
+      ["2026-10-04","13:30","OSI – IL Jardar","Domus Athletica"],
+      ["2026-10-24","13:00","IL Jardar – BK Tromsø 2","Combihallen"],
+      ["2026-11-07","11:00","Førde VBK 2 – IL Jardar","Øyrane Arena"],
+      ["2026-11-08","15:00","TIF Viking 2 – IL Jardar","Stemmemyren idrettshall"],
+      ["2026-11-14","15:00","IL Jardar – Oldenborg","Combihallen"],
+      ["2026-11-21","15:00","NTNUI 2 – IL Jardar","Dragvollhallen A"],
+      ["2026-11-28","15:00","IL Jardar – OSI","Combihallen"],
+      ["2026-12-13","13:00","ToppVolley Norge 2 – IL Jardar","Suldalshallen"],
+      ["2027-01-09","16:00","KFUM Volda – IL Jardar","Volda Campus Sparebank1 Arena 2"],
+      ["2027-01-10","14:00","Blindheim IL – IL Jardar","Blindheimshallen"],
+      ["2027-01-30","14:00","IL Jardar – NTNUI 2","Combihallen"],
+      ["2027-02-07","12:00","IL Jardar – KFUM Volda","Combihallen"],
+      ["2027-02-13","15:00","IL Jardar – TIF Viking 2","Combihallen"],
+      ["2027-02-20","14:00","Vegårshei IL – IL Jardar","Åmlihallen"],
+      ["2027-02-26","19:00","IL Jardar – Vegårshei IL","Combihallen"],
+      ["2027-02-28","11:00","Oldenborg – IL Jardar","Voksenhallen"],
+      ["2027-03-06","12:00","BK Tromsø 2 – IL Jardar","Tromsøhallen B"],
+      ["2027-03-14","13:00","IL Jardar – Blindheim IL","Combihallen"]
+    ],
+    activities:[
+      ["2026-09-21","2026-09-27","Jakttur","Alta","thomas"],
+      ["2026-09-15","2026-09-21","Samling Warszawa","Warszawa, Polen","u20"],
+      ["2026-10-19","2026-10-21","NEVZA pre-camp","Tallinn, Estland","u20"],
+      ["2026-10-21","2026-10-26","NEVZA","Rovaniemi, Finland","u20"]
+    ]
+  },
+  eirik:{
+    name:"Eirik", team:"Vikersund Idrettsforening", subtitle:"Vikersund IF · Øst 4. divisjon menn avdeling 2", cls:"eirik",
+    games:[
+      ["2026-10-18","11:00","Vikersund Idrettsforening – Rabaldder Volleyball","Nydalen idrettshall B"],
+      ["2026-10-18","15:00","Stovner 2 – Vikersund Idrettsforening","Nydalen idrettshall B"],
+      ["2026-11-22","11:00","OSI 3 – Vikersund Idrettsforening","Bø VGS - fleirbrukshall A"],
+      ["2026-11-22","13:00","Vikersund Idrettsforening – Skarphedin, Idrettslaget","Bø VGS - fleirbrukshall A"],
+      ["2026-12-12","10:00","Vikersund Idrettsforening – Idrettslaget Jardar 2","Menstad C"],
+      ["2026-12-12","14:00","Gulset Idrettsforening – Vikersund Idrettsforening","Menstad C"],
+      ["2027-01-09","10:00","Larvik Volleyballklubb – Vikersund Idrettsforening","Combihallen A"],
+      ["2027-01-09","14:00","Idrettslaget Jardar 2 – Vikersund Idrettsforening","Combihallen A"],
+      ["2027-02-13","12:00","Rabaldder Volleyball – Vikersund Idrettsforening","Modumhallen C"],
+      ["2027-02-13","14:00","Vikersund Idrettsforening – Gulset Idrettsforening","Modumhallen C"],
+      ["2027-03-06","10:00","Vikersund Idrettsforening – OSI 3","Bø VGS - fleirbrukshall A"],
+      ["2027-03-06","14:00","Skarphedin, Idrettslaget – Vikersund Idrettsforening","Bø VGS - fleirbrukshall A"],
+      ["2027-04-04","11:00","Vikersund Idrettsforening – Bergkameratene-Volleyball","Stovnerhallen B"],
+      ["2027-04-04","15:00","Vikersund Idrettsforening – Stovner 2","Stovnerhallen B"]
+    ],
+    activities:[
+      ["2027-01-15","2027-01-17","Cupfinalehelg","","eirik"],
+      ["2026-09-24","2026-09-24","Middag og show · ettermiddag","Hønefoss","eirik"],
+      ["2026-09-25","2026-09-27","Hyttetur","Bergsbygda","eirik"],
+      ["2026-10-03","2026-10-11","Masters World Championship 2026","Benidorm, Spania","eirik"],
+      ["2026-09-15","2026-09-21","Samling Warszawa","Warszawa, Polen","u20"],
+      ["2026-10-19","2026-10-21","NEVZA pre-camp","Tallinn, Estland","u20"],
+      ["2026-10-21","2026-10-26","NEVZA","Rovaniemi, Finland","u20"]
+    ]
+  },
+  gry:{
+    name:"Gry", team:"Aktiviteter", subtitle:"Gry · aktiviteter", cls:"gry",
+    games:[],
+    activities:[
+      ["2026-09-24","2026-09-24","Middag og show · ettermiddag","Hønefoss","gry"],
+      ["2026-09-25","2026-09-27","Hyttetur","Bergsbygda","gry"],
+      ["2026-10-23","2026-10-26","NEVZA","Finland","gry"],
+      ["2026-12-12","2026-12-12","Jobbehelg · 08:00–15:30","Jobb","gry"],
+      ["2026-12-13","2026-12-13","Jobbehelg · 08:00–15:30","Jobb","gry"]
+    ]
+  }
+};
+
+const MONTHS_NO=["januar","februar","mars","april","mai","juni","juli","august","september","oktober","november","desember"];
+const MONTHS_CAP=MONTHS_NO.map(x=>x.charAt(0).toUpperCase()+x.slice(1));
+const WD=["Søn","Man","Tir","Ons","Tor","Fre","Lør"];
+const SEASON_START="2026-09-15", SEASON_END="2027-04-04";
+
+function parseDate(s){const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function isoWeek(date){
+  const d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));
+  const day=d.getUTCDay()||7; d.setUTCDate(d.getUTCDate()+4-day);
+  const y0=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.ceil((((d-y0)/86400000)+1)/7);
+}
+function fmtDate(d){return `${WD[d.getDay()]} ${d.getDate()}. ${MONTHS_NO[d.getMonth()]} ${d.getFullYear()}`}
+function fmtRange(a,b){
+  if(a.getMonth()===b.getMonth()&&a.getFullYear()===b.getFullYear()) return `${a.getDate()}.–${b.getDate()}. ${MONTHS_NO[a.getMonth()]} ${a.getFullYear()}`;
+  return `${a.getDate()}. ${MONTHS_NO[a.getMonth()]} – ${b.getDate()}. ${MONTHS_NO[b.getMonth()]} ${b.getFullYear()}`;
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+function personEvents(id){
+  const p=DATA[id], events=[];
+  p.games.forEach(g=>events.push({type:"game",date:g[0],start:g[0],end:g[0],time:g[1],title:g[2],place:g[3],cls:p.cls,person:p.name,team:p.team}));
+  p.activities.forEach(a=>events.push({type:"activity",date:a[0],start:a[0],end:a[1],time:"",title:a[2],place:a[3],cls:a[4],person:p.name,team:"Norge U20"}));
+  return events.sort((a,b)=>a.start.localeCompare(b.start)||(a.time||"").localeCompare(b.time||""));
+}
+function allEvents(selectedIds=["ingrid","mads","thomas","eirik","gry"]){
+  const events=[];
+  selectedIds.forEach(id=>events.push(...personEvents(id)));
+
+  const out=[];
+  const sharedActivities=new Map();
+
+  events.forEach(e=>{
+    if(e.type==="activity"){
+      // Activities with same dates/title/place are one shared event in "Alle".
+      const k=`${e.start}|${e.end}|${e.title}|${e.place}`;
+      if(!sharedActivities.has(k)){
+        const copy={...e,participants:[{name:e.person,cls:DATA[selectedIds.find(id=>DATA[id].name===e.person)]?.cls || e.cls}]};
+        sharedActivities.set(k,copy);
+        out.push(copy);
+      }else{
+        const item=sharedActivities.get(k);
+        if(!item.participants.some(p=>p.name===e.person)){
+          const id=selectedIds.find(id=>DATA[id].name===e.person);
+          item.participants.push({name:e.person,cls:id?DATA[id].cls:e.cls});
+        }
+      }
+    }else{
+      out.push(e);
+    }
+  });
+
+  // Keep stable person order in badges.
+  const order=["Ingrid","Mads","Thomas","Eirik","Gry"];
+  out.forEach(e=>{
+    if(e.participants){
+      e.participants.sort((a,b)=>order.indexOf(a.name)-order.indexOf(b.name));
+      e.person=e.participants.map(p=>p.name).join(" & ");
+      e.shared=e.participants.length>1;
+    }
+  });
+
+  return out.sort((a,b)=>a.start.localeCompare(b.start)||(a.time||"").localeCompare(b.time||""));
+}
+function expandedBusyDates(events){
+  const set=new Set();
+  events.forEach(e=>{
+    let d=parseDate(e.start), end=parseDate(e.end);
+    while(d<=end){set.add(dateKey(d));d=addDays(d,1)}
+  });
+  return set;
+}
+function freeWeekends(events){
+  const busy=expandedBusyDates(events), out=[];
+  let d=parseDate(SEASON_START);
+  while(d.getDay()!==5)d=addDays(d,1);
+  const end=parseDate(SEASON_END);
+  for(;d<=end;d=addDays(d,7)){
+    const fri=new Date(d), sat=addDays(fri,1), sun=addDays(fri,2);
+    if(sun>end) continue;
+    if(![fri,sat,sun].some(x=>busy.has(dateKey(x)))) out.push({fri,sat,sun});
+  }
+  return out;
+}
+
+function opponent(title,team){
+  const parts=title.split(" – ");
+  if(parts.length!==2)return title;
+  return parts[0].includes(team)?parts[1]:parts[0];
+}
+function homeAway(title,team){
+  const parts=title.split(" – ");
+  if(parts.length!==2)return "";
+  const norm=s=>s.toLowerCase().replace(/\s+/g," ").trim();
+  const t=norm(team);
+  if(norm(parts[0]).includes(t)||t.includes(norm(parts[0])))return "H";
+  if(norm(parts[1]).includes(t)||t.includes(norm(parts[1])))return "B";
+  return "";
+}
+
+function renderList(events,free,personId=null){
+  const items=[], skip=new Set(), groups=new Map();
+  events.forEach((e,i)=>{if(e.type==="game"&&["Ingrid","Eirik"].includes(e.person)){const k=e.person+"|"+e.date;(groups.get(k)||groups.set(k,[]).get(k)).push({e,i});}});
+  groups.forEach(g=>{if(g.length<2)return;g.forEach(x=>skip.add(x.i));const first=g[0].e,d=parseDate(first.date),gs=g.map(x=>x.e).sort((a,b)=>a.time.localeCompare(b.time));const rows=gs.map(e=>`<div class="double-game-row"><div class="double-time">${e.time}</div><div><div class="double-title">${escapeHtml(e.title)}</div><div class="double-hall">${escapeHtml(e.place)}</div></div></div>`).join("");items.push({sort:first.date+"T"+gs[0].time,month:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`,html:`<div class="double-match ${first.cls}"><div><div class="list-date">${d.getDate()}. ${MONTHS_NO[d.getMonth()].slice(0,3)}</div><span class="person-badge ${first.cls}" style="margin-top:5px">${escapeHtml(first.person)}</span><div class="week-no">Uke ${isoWeek(d)}</div></div><div class="double-brace">}</div><div class="double-games">${rows}</div></div>`});});
+  events.forEach((e,i)=>{if(skip.has(i))return;if(e.type==="game"){const d=parseDate(e.date);items.push({sort:e.date+"T"+e.time,month:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`,html:`<div class="list-item ${e.cls}"><div><div class="list-date">${d.getDate()}. ${MONTHS_NO[d.getMonth()].slice(0,3)}</div><div class="list-time">${e.time}</div><div class="week-no">Uke ${isoWeek(d)}</div></div><div><span class="person-badge ${e.cls}">${escapeHtml(e.person)}</span><div class="item-title">${escapeHtml(e.title)}</div><div class="item-sub">${escapeHtml(e.place)}</div></div></div>`});}else{const ss=parseDate(e.start),en=parseDate(e.end),shared=e.shared&&e.participants&&e.participants.length>1;let badgeHtml=shared?`<div class="shared-badges">${e.participants.map(p=>`<span class="shared-badge ${p.cls}">${escapeHtml(p.name)}</span>`).join("")}</div>`:`<span class="person-badge ${e.cls}">${escapeHtml(e.cls==="u20"?"Norge U20 · "+e.person:e.person)}</span>`;items.push({sort:e.start+"T00:00",month:`${ss.getFullYear()}-${String(ss.getMonth()+1).padStart(2,"0")}`,html:`<div class="list-item ${shared?"shared-activity":e.cls}"><div><div class="list-date">${ss.getDate()}. ${MONTHS_NO[ss.getMonth()].slice(0,3)}</div><div class="list-time">Akt.</div><div class="week-no">Uke ${isoWeek(ss)}</div></div><div>${badgeHtml}<div class="item-title">${escapeHtml(e.title)}</div><div class="item-sub">${fmtRange(ss,en)} · ${escapeHtml(e.place)}</div></div></div>`});}});
+  free.forEach(w=>items.push({sort:dateKey(w.fri)+"T00:00",month:`${w.fri.getFullYear()}-${String(w.fri.getMonth()+1).padStart(2,"0")}`,html:`<div class="free-weekend"><strong>FRIHELG</strong><div class="dates">${fmtRange(w.fri,w.sun)}</div><div class="week-no">Uke ${isoWeek(w.fri)}</div></div>`}));items.sort((a,b)=>a.sort.localeCompare(b.sort));let current="",out="";items.forEach((it,idx)=>{if(it.month!==current){current=it.month;const [y,m]=current.split("-").map(Number);out+=`<div class="month-list"><div class="month-list-title">${MONTHS_CAP[m-1]} ${y}</div>`;}out+=it.html;const next=items[idx+1];if(!next||next.month!==current)out+=`</div>`;});return out;
+}
+function monthRange(events){
+  let min=parseDate(SEASON_START), max=parseDate(SEASON_END);
+  return {min:new Date(min.getFullYear(),min.getMonth(),1),max:new Date(max.getFullYear(),max.getMonth(),1)};
+}
+function calendarMonths(events){
+  const {min,max}=monthRange(events), arr=[]; let d=new Date(min);
+  while(d<=max){arr.push(new Date(d));d=new Date(d.getFullYear(),d.getMonth()+1,1)}
+  return arr;
+}
+function renderCalendar(events,free){
+  const byDate={};
+  events.forEach(e=>{
+    let d=parseDate(e.start), end=parseDate(e.end);
+    while(d<=end){
+      const k=dateKey(d); (byDate[k]??=[]).push(e);
+      d=addDays(d,1);
+    }
+  });
+  const freeMap=new Map();
+  free.forEach(w=>{freeMap.set(dateKey(w.fri),"fri");freeMap.set(dateKey(w.sat),"sat");freeMap.set(dateKey(w.sun),"sun")});
+  let out="";
+  calendarMonths(events).forEach(m=>{
+    const y=m.getFullYear(),mo=m.getMonth();
+    out+=`<div class="month-card"><div class="month-title">${MONTHS_CAP[mo]} ${y}</div><div class="calendar-grid">`;
+    ["Man","Tir","Ons","Tor","Fre","Lør","Søn"].forEach(x=>out+=`<div class="dow">${x}</div>`);
+    const first=(new Date(y,mo,1).getDay()+6)%7;
+    for(let i=0;i<first;i++)out+=`<div class="day empty"></div>`;
+    const days=new Date(y,mo+1,0).getDate();
+    for(let day=1;day<=days;day++){
+      const d=new Date(y,mo,day), k=dateKey(d), fw=freeMap.get(k);
+      const fcls=fw?` free-cell free-${fw}`:"";
+      out+=`<div class="day${fcls}" data-date="${k}"><div class="daynum">${day}</div>`;
+      if(d.getDay()===1)out+=`<div class="calendar-week">Uke ${isoWeek(d)}</div>`;
+      if(fw==="sat")out+=`<div class="free-label">FRIHELG</div>`;
+      (()=>{const evs=(byDate[k]||[]).sort((a,b)=>(a.time||"").localeCompare(b.time||"")),done=new Set();["Ingrid","Eirik"].forEach(person=>{const ms=evs.map((e,i)=>({e,i})).filter(x=>x.e.type==="game"&&x.e.person===person);if(ms.length>=2){ms.forEach(x=>done.add(x.i));const f=ms[0].e,rows=ms.map(x=>{const e=x.e,ha=homeAway(e.title,e.team),hb=ha?`<span class="ha-badge ${ha==="H"?"ha-home":"ha-away"}">${ha}</span>`:"";return `<div class="cal-double-row">${hb}${e.time} ${escapeHtml(opponent(e.title,e.team))}</div>`}).join("");out+=`<div class="cal-event ${f.cls} cal-double" title="${escapeHtml(person)} · dobbeltkamp">${escapeHtml(person)}${rows}</div>`;}});evs.forEach((e,i)=>{if(done.has(i))return;
+        if(e.type==="game"){
+          const ha=homeAway(e.title,e.team);
+          const haHtml=ha?`<span class="ha-badge ${ha==="H"?"ha-home":"ha-away"}">${ha}</span>`:"";
+          const haText=ha==="H"?"Hjemmekamp":ha==="B"?"Bortekamp":"";
+          out+=`<div class="cal-event ${e.cls}" title="${haText}${haText?" · ":""}${escapeHtml(e.title)} · ${escapeHtml(e.place)}">${haHtml}${e.time} ${escapeHtml(e.person)}<br>${escapeHtml(opponent(e.title,e.team))}</div>`;
+        }else{
+          const shared=e.shared && e.participants && e.participants.length>1;
+          if(shared){
+            const badges=e.participants.map(p=>`<span class="cal-shared-badge ${p.cls}">${escapeHtml(p.name)}</span>`).join("");
+            out+=`<div class="cal-event shared-activity" title="${escapeHtml(e.person)} · ${escapeHtml(e.title)} · ${escapeHtml(e.place)}"><div class="cal-shared-badges">${badges}</div>${escapeHtml(e.title)}</div>`;
+          }else{
+            const who=e.cls==="u20"?"U20 · "+e.person:e.person;
+            out+=`<div class="cal-event ${e.cls}" title="${escapeHtml(e.title)} · ${escapeHtml(e.place)}">${escapeHtml(who)}<br>${escapeHtml(e.title)}</div>`;
+          }
+        }
+      });})();
+      out+=`</div>`;
+    }
+    const used=first+days, rest=(7-used%7)%7;
+    for(let i=0;i<rest;i++)out+=`<div class="day empty"></div>`;
+    out+=`</div></div>`;
+  });
+  return out;
+}
+
+function renderPage(id){
+  const isAll=id==="all";
+  const events=isAll?allEvents():personEvents(id);
+  const free=freeWeekends(events);
+  const p=isAll?null:DATA[id];
+  const title=isAll?"Alle kamper og aktiviteter":`${p.name} sine kamper og aktiviteter`;
+  const subtitle=isAll?"Familiekalender · alle fire":p.subtitle;
+  const stripe=isAll?"":` person-stripe ${p.cls}`;
+  const legend=isAll?`
+    <div class="legend">
+      <div class="legend-item"><span class="dot ingrid"></span>Koll 2 – Ingrid</div>
+      <div class="legend-item"><span class="dot mads"></span>TIF Viking – Mads</div>
+      <div class="legend-item"><span class="dot thomas"></span>Jardar – Thomas</div>
+      <div class="legend-item"><span class="dot eirik"></span>Vikersund – Eirik</div>
+      <div class="legend-item"><span class="dot gry"></span>Gry – aktiviteter</div>
+      <div class="legend-item"><span class="dot u20"></span>Norge U20</div>
+    </div>
+    <div class="all-filters" id="allFilters">
+      <label class="filter-chip ingrid"><input type="checkbox" data-filter="ingrid" checked> Ingrid</label>
+      <label class="filter-chip mads"><input type="checkbox" data-filter="mads" checked> Mads</label>
+      <label class="filter-chip thomas"><input type="checkbox" data-filter="thomas" checked> Thomas</label>
+      <label class="filter-chip eirik"><input type="checkbox" data-filter="eirik" checked> Eirik</label>
+      <label class="filter-chip gry"><input type="checkbox" data-filter="gry" checked> Gry</label>
+    </div>
+    <div class="filter-summary" id="filterSummary">Viser alle fem kalendere</div>`:"";
+  return `<section class="page ${id==="all"?"active":""}" id="page-${id}">
+    <div class="page-head${stripe}"><div><h2>${title}</h2><div class="meta">${subtitle}</div></div></div>
+    ${legend}
+    <div class="view-toggle">
+      <button class="view-btn active" data-view="list" data-pageid="${id}">Liste</button>
+      <button class="view-btn" data-view="calendar" data-pageid="${id}">Kalender</button>
+    </div>
+    <div class="view-pane active" data-pane="list">${renderList(events,free,id)}</div>
+    <div class="view-pane" data-pane="calendar">${renderCalendar(events,free)}</div>
+  </section>`;
+}
+
+const app=document.getElementById("app");
+["all","ingrid","mads","thomas","eirik","gry"].forEach(id=>app.insertAdjacentHTML("beforeend",renderPage(id)));
+
+
+function selectedAllIds(){
+  return [...document.querySelectorAll('#allFilters input[data-filter]:checked')].map(x=>x.dataset.filter);
+}
+
+function updateFilterSummary(ids){
+  const el=document.getElementById("filterSummary");
+  if(!el)return;
+  if(ids.length===5) el.textContent="Viser alle fem kalendere";
+  else if(ids.length===0) el.textContent="Ingen kalendere er valgt";
+  else el.textContent="Viser: "+ids.map(id=>DATA[id].name).join(", ");
+}
+
+function rerenderAll(){
+  const page=document.getElementById("page-all");
+  if(!page)return;
+
+  const ids=selectedAllIds();
+  updateFilterSummary(ids);
+
+  const listPane=page.querySelector('[data-pane="list"]');
+  const calPane=page.querySelector('[data-pane="calendar"]');
+
+  if(ids.length===0){
+    const msg='<div class="empty-selection">Velg minst én person for å vise kamper, aktiviteter og frihelger.</div>';
+    listPane.innerHTML=msg;
+    calPane.innerHTML=msg;
+    return;
+  }
+
+  const events=allEvents(ids);
+  const free=freeWeekends(events);
+  listPane.innerHTML=renderList(events,free,"all");
+  calPane.innerHTML=renderCalendar(events,free);
+}
+
+document.querySelectorAll('#allFilters input[data-filter]').forEach(cb=>{
+  cb.addEventListener("change",rerenderAll);
+});
+
+document.querySelectorAll(".bottom-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    const id=btn.dataset.page;
+    document.querySelectorAll(".bottom-btn").forEach(b=>b.classList.toggle("active",b===btn));
+    document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id==="page-"+id));
+    window.scrollTo({top:0,behavior:"smooth"});
+  });
+});
+
+document.querySelectorAll(".view-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    const page=document.getElementById("page-"+btn.dataset.pageid);
+    const view=btn.dataset.view;
+    page.querySelectorAll(".view-btn").forEach(b=>b.classList.toggle("active",b===btn));
+    page.querySelectorAll(".view-pane").forEach(p=>p.classList.toggle("active",p.dataset.pane===view));
+  });
+});
+</script>
+</body>
+</html>
